@@ -1,7 +1,7 @@
 package com.chiacchio.together.Service;
 
 import com.chiacchio.together.Model.Usuario;
-import com.chiacchio.together.Repository.UserRepository;
+import com.chiacchio.together.Repository.UsuarioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -14,17 +14,19 @@ import java.util.ArrayList;
 public class CustomUserDetailsService implements UserDetailsService {
 
     @Autowired
-    private UserRepository userRepository;
+    private UsuarioRepository usuarioRepository;
 
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-        Usuario user = userRepository.findByEmail(email)
+        Usuario user = usuarioRepository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado con email: " + email));
 
         return new org.springframework.security.core.userdetails.User(
                 user.getEmail(),
                 user.getPassword(),
-                new ArrayList<>() // Aquí irían los roles/authorities
+                user.isEnabled(),
+                true, true, true,
+                new ArrayList<>()
         );
     }
 }

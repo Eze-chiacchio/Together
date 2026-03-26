@@ -1,7 +1,7 @@
 package com.chiacchio.together.Service;
 
 import com.chiacchio.together.Model.Usuario;
-import com.chiacchio.together.Repository.UserRepository;
+import com.chiacchio.together.Repository.UsuarioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -10,7 +10,7 @@ import org.springframework.stereotype.Service;
 public class UserService {
 
     @Autowired
-    private UserRepository userRepository;
+    private UsuarioRepository usuarioRepository;
 
     @Autowired
     private BCryptPasswordEncoder passwordEncoder;
@@ -19,6 +19,6 @@ public class UserService {
         String encodedPassword = passwordEncoder.encode(user.getPassword());
         user.setPassword(encodedPassword);
 
-        return userRepository.save(user);
+        return usuarioRepository.save(user);
     }
 }

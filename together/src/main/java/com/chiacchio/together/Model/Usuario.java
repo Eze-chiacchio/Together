@@ -35,6 +35,7 @@ public class Usuario {
 
     @Column(nullable = false)
     private String password;
+    private boolean enabled = false;
 
     public Long getId() {
         return id;
@@ -106,5 +107,13 @@ public class Usuario {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
+    }
+
+    public boolean isEnabled() {
+        return enabled;
     }
 }
