@@ -26,4 +26,13 @@ public class AuthController {
             return new ResponseEntity<>("Error al registrar: " + e.getMessage(), HttpStatus.BAD_REQUEST);
         }
     }
+    @PostMapping("/login")
+    public ResponseEntity<?> login(@RequestBody Usuario loginRequest) {
+        try {
+            // Aquí podrías usar AuthenticationManager(TO DO)
+            return ResponseEntity.ok("¡Login exitoso! Bienvenido " + loginRequest.getUsername());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Credenciales inválidas");
+        }
+    }
 }
