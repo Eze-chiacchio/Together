@@ -2,7 +2,6 @@ package com.chiacchio.together.Security;
 
 import com.chiacchio.together.Model.Usuario;
 import jakarta.persistence.*;
-import org.springframework.data.annotation.Id;
 
 import java.time.LocalDateTime;
 
