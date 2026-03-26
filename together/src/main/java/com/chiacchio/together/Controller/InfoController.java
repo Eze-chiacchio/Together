@@ -1,5 +1,8 @@
 package com.chiacchio.together.Controller;
 
+import com.chiacchio.together.Repository.UserRepository;
+import com.chiacchio.together.dto.UserResponseDTO;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -15,19 +18,13 @@ import java.util.Map;
 @RequestMapping("/api/info")
 public class InfoController {
 
+    @Autowired
+    private UserRepository userRepository;
+
     @GetMapping("/me")
-    public ResponseEntity<?> getMyProfile(@AuthenticationPrincipal UserDetails userDetails) {
-        // userDetails contiene el username y las autoridades (roles) del token actual
-        if (userDetails == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("No estás logueado");
-        }
-
-        // Creamos un mapa simple para devolver la info
-        Map<String, Object> profile = new HashMap<>();
-        profile.put("username", userDetails.getUsername());
-        profile.put("roles", userDetails.getAuthorities());
-        profile.put("mensaje", "¡Hola " + userDetails.getUsername() + "! Este es un endpoint protegido.");
-
-        return ResponseEntity.ok(profile);
+    public ResponseEntity<UserResponseDTO> getMyProfile(@AuthenticationPrincipal UserDetails userDetails) {
+        return userRepository.findByEmail(userDetails.getUsername())
+                .map(user -> ResponseEntity.ok(new UserResponseDTO(user)))
+                .orElse(ResponseEntity.notFound().build());
     }
 }
