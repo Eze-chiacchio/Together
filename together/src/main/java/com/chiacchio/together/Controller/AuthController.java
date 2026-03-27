@@ -2,7 +2,6 @@ package com.chiacchio.together.Controller;
 
 import com.chiacchio.together.Model.JwtResponse;
 import com.chiacchio.together.Model.Usuario;
-import com.chiacchio.together.Repository.UsuarioRepository;
 import com.chiacchio.together.Repository.VerificationTokenRepository;
 import com.chiacchio.together.Security.JwtUtils;
 import com.chiacchio.together.Security.VerificationToken;
@@ -27,12 +26,13 @@ public class AuthController {
 
     @Autowired
     private UserService userService;
+
     @Autowired
     private JwtUtils jwtUtils;
+
     @Autowired
     private AuthenticationManager authenticationManager;
-    @Autowired
-    private UsuarioRepository usuarioRepository;
+
     @Autowired
     private PasswordEncoder passwordEncoder;
 
@@ -44,18 +44,15 @@ public class AuthController {
 
     @PostMapping("/register")
     public ResponseEntity<?> registerUser(@RequestBody Usuario user) {
-        // ... tus validaciones de email/dni existentes ...
-
         user.setPassword(passwordEncoder.encode(user.getPassword()));
-        user.setEnabled(false); // Aseguramos que empiece desactivado
-        usuarioRepository.save(user);
+        user.setEnabled(false);
 
-        // Generamos un código único al azar
+        userService.save(user);
+
         String token = UUID.randomUUID().toString();
         VerificationToken verificationToken = new VerificationToken(token, user);
         tokenRepository.save(verificationToken);
 
-        // Mandamos el mail
         emailService.sendConfirmationEmail(user.getEmail(), token);
 
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -68,29 +65,27 @@ public class AuthController {
                 .map(verificationToken -> {
                     Usuario user = verificationToken.getUser();
                     user.setEnabled(true);
-                    usuarioRepository.save(user);
+                    userService.save(user);
                     tokenRepository.delete(verificationToken);
                     return ResponseEntity.ok("Cuenta activada correctamente. Ya podés loguearte.");
                 })
                 .orElse(ResponseEntity.badRequest().body("Token inválido o expirado."));
     }
+
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody Usuario loginRequest) { // Cambié Usuario por User
+    public ResponseEntity<?> login(@RequestBody Usuario loginRequest) {
         try {
-            // Ahora usamos el email para autenticar
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(loginRequest.getEmail(), loginRequest.getPassword())
             );
 
             SecurityContextHolder.getContext().setAuthentication(authentication);
-
             String jwt = jwtUtils.generateJwtToken(authentication);
 
             return ResponseEntity.ok(new JwtResponse(jwt));
 
         } catch (AuthenticationException e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Error: Credenciales inválidas");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Error: Credenciales inválidas o cuenta no activa");
         }
     }
-
 }
