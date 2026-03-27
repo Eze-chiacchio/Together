@@ -44,19 +44,21 @@ public class AuthController {
 
     @PostMapping("/register")
     public ResponseEntity<?> registerUser(@RequestBody Usuario user) {
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
-        user.setEnabled(false);
+        try {
+            Usuario savedUser = userService.registrarUsuario(user);
 
-        userService.save(user);
+            String token = UUID.randomUUID().toString();
+            VerificationToken verificationToken = new VerificationToken(token, savedUser);
+            tokenRepository.save(verificationToken);
 
-        String token = UUID.randomUUID().toString();
-        VerificationToken verificationToken = new VerificationToken(token, user);
-        tokenRepository.save(verificationToken);
+            emailService.sendConfirmationEmail(savedUser.getEmail(), token);
 
-        emailService.sendConfirmationEmail(user.getEmail(), token);
+            return ResponseEntity.status(HttpStatus.CREATED)
+                    .body("Usuario registrado. Revisá tu mail para activar la cuenta.");
 
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body("Usuario registrado. Por favor, revisá tu mail para activar la cuenta.");
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
+        }
     }
 
     @GetMapping("/confirm")
