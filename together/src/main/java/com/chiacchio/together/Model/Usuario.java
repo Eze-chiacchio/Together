@@ -35,6 +35,9 @@ public class Usuario {
 
     @Column(nullable = false)
     private String password;
+
+    private String profileImageKey;
+
     private boolean enabled = false;
 
     public Long getId() {
@@ -107,6 +110,14 @@ public class Usuario {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public String getProfileImageKey() {
+        return profileImageKey;
+    }
+
+    public void setProfileImageKey(String profileImageKey) {
+        this.profileImageKey = profileImageKey;
     }
 
     public void setEnabled(boolean enabled) {
