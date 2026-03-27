@@ -12,8 +12,13 @@ public class UserResponseDTO {
     private String nroDocumento;
     private String provincia;
     private LocalDate fechaNacimiento;
+    private String profileImageUrl;
 
     public UserResponseDTO(Usuario user) {
+        this(user, null);
+    }
+
+    public UserResponseDTO(Usuario user, String profileImageUrl) {
         this.nombre = user.getNombre();
         this.segundoNombre = user.getSegundoNombre();
         this.apellido = user.getApellido();
@@ -21,6 +26,7 @@ public class UserResponseDTO {
         this.nroDocumento = user.getNroDocumento();
         this.provincia = user.getProvincia().toString(); // Convertimos el Enum a String
         this.fechaNacimiento = user.getFechaNacimiento();
+        this.profileImageUrl = profileImageUrl;
     }
     public String getNombre() {
         return nombre;
@@ -76,5 +82,13 @@ public class UserResponseDTO {
 
     public void setFechaNacimiento(LocalDate fechaNacimiento) {
         this.fechaNacimiento = fechaNacimiento;
+    }
+
+    public String getProfileImageUrl() {
+        return profileImageUrl;
+    }
+
+    public void setProfileImageUrl(String profileImageUrl) {
+        this.profileImageUrl = profileImageUrl;
     }
 }
