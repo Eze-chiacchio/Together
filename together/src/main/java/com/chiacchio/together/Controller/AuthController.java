@@ -2,9 +2,7 @@ package com.chiacchio.together.Controller;
 
 import com.chiacchio.together.Model.JwtResponse;
 import com.chiacchio.together.Model.Usuario;
-import com.chiacchio.together.Repository.VerificationTokenRepository;
 import com.chiacchio.together.Security.JwtUtils;
-import com.chiacchio.together.Service.RegistrationService;
 import com.chiacchio.together.Service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -24,26 +22,18 @@ public class AuthController {
     private UserService userService;
 
     @Autowired
-    private RegistrationService registrationService;
-
-    @Autowired
     private JwtUtils jwtUtils;
 
     @Autowired
     private AuthenticationManager authenticationManager;
 
-    @Autowired
-    private VerificationTokenRepository tokenRepository;
-
     @PostMapping("/register")
     public ResponseEntity<?> registerUser(@RequestBody Usuario user) {
         try {
-            registrationService.registerUserWithConfirmation(user);
+            userService.registrarUsuario(user);
 
             return ResponseEntity.status(HttpStatus.CREATED)
-                    .body("Usuario registrado. Revisa tu mail para activar la cuenta.");
-        } catch (IllegalStateException e) {
-            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(e.getMessage());
+                    .body("Usuario registrado correctamente.");
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
         }
@@ -51,15 +41,8 @@ public class AuthController {
 
     @GetMapping("/confirm")
     public ResponseEntity<?> confirmRegistration(@RequestParam("token") String token) {
-        return tokenRepository.findByToken(token)
-                .map(verificationToken -> {
-                    Usuario user = verificationToken.getUser();
-                    user.setEnabled(true);
-                    userService.save(user);
-                    tokenRepository.delete(verificationToken);
-                    return ResponseEntity.ok("Cuenta activada correctamente. Ya podes loguearte.");
-                })
-                .orElse(ResponseEntity.badRequest().body("Token invalido o expirado."));
+        return ResponseEntity.status(HttpStatus.GONE)
+                .body("La confirmacion de cuenta esta deshabilitada temporalmente.");
     }
 
     @PostMapping("/login")
