@@ -24,6 +24,7 @@ public class ViajeService {
         viaje.setCiudadDestino(request.getCiudadDestino().trim());
         viaje.setHorarioEstimado(request.getHorarioEstimado());
         viaje.setCuposDisponibles(request.getCuposDisponibles());
+        viaje.setCostoPorCupo(request.getCostoPorCupo());
         viaje.setConductor(conductor);
 
         return viajeRepository.save(viaje);
@@ -52,6 +53,10 @@ public class ViajeService {
 
         if (request.getCuposDisponibles() == null || request.getCuposDisponibles() <= 0) {
             throw new IllegalArgumentException("La cantidad de cupos debe ser mayor a cero");
+        }
+
+        if (request.getCostoPorCupo() == null || request.getCostoPorCupo().signum() < 0) {
+            throw new IllegalArgumentException("El costo por cupo debe ser mayor o igual a cero");
         }
     }
 }

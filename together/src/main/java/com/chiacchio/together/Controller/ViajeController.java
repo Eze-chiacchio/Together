@@ -2,6 +2,7 @@ package com.chiacchio.together.Controller;
 
 import com.chiacchio.together.Model.Usuario;
 import com.chiacchio.together.Repository.UsuarioRepository;
+import com.chiacchio.together.Service.ProfileImageStorageService;
 import com.chiacchio.together.Service.ViajeService;
 import com.chiacchio.together.dto.CrearViajeRequestDTO;
 import com.chiacchio.together.dto.ViajeResponseDTO;
@@ -25,6 +26,9 @@ public class ViajeController {
     @Autowired
     private UsuarioRepository usuarioRepository;
 
+    @Autowired
+    private ProfileImageStorageService profileImageStorageService;
+
     @PostMapping
     public ResponseEntity<ViajeResponseDTO> crearViaje(
             @RequestBody CrearViajeRequestDTO request,
@@ -35,7 +39,7 @@ public class ViajeController {
 
         try {
             return ResponseEntity.status(HttpStatus.CREATED)
-                    .body(new ViajeResponseDTO(viajeService.crearViaje(request, conductor)));
+                    .body(buildViajeResponse(viajeService.crearViaje(request, conductor)));
         } catch (IllegalArgumentException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage(), e);
         }
@@ -45,9 +49,16 @@ public class ViajeController {
     public ResponseEntity<List<ViajeResponseDTO>> listarViajesDisponibles() {
         List<ViajeResponseDTO> viajes = viajeService.listarViajesDisponibles()
                 .stream()
-                .map(ViajeResponseDTO::new)
+                .map(this::buildViajeResponse)
                 .toList();
 
         return ResponseEntity.ok(viajes);
+    }
+
+    private ViajeResponseDTO buildViajeResponse(com.chiacchio.together.Model.Viaje viaje) {
+        return new ViajeResponseDTO(
+                viaje,
+                profileImageStorageService.generatePresignedUrl(viaje.getConductor().getProfileImageKey())
+        );
     }
 }

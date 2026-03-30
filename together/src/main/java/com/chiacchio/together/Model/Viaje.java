@@ -2,6 +2,7 @@ package com.chiacchio.together.Model;
 
 import jakarta.persistence.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
@@ -23,6 +24,9 @@ public class Viaje {
 
     @Column(nullable = false)
     private Integer cuposDisponibles;
+
+    @Column(nullable = false, precision = 10, scale = 2)
+    private BigDecimal costoPorCupo;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "usuario_id", nullable = false)
@@ -66,6 +70,14 @@ public class Viaje {
 
     public void setCuposDisponibles(Integer cuposDisponibles) {
         this.cuposDisponibles = cuposDisponibles;
+    }
+
+    public BigDecimal getCostoPorCupo() {
+        return costoPorCupo;
+    }
+
+    public void setCostoPorCupo(BigDecimal costoPorCupo) {
+        this.costoPorCupo = costoPorCupo;
     }
 
     public Usuario getConductor() {

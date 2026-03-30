@@ -1,5 +1,6 @@
 package com.chiacchio.together.dto;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 public class CrearViajeRequestDTO {
@@ -7,6 +8,7 @@ public class CrearViajeRequestDTO {
     private String ciudadDestino;
     private LocalDateTime horarioEstimado;
     private Integer cuposDisponibles;
+    private BigDecimal costoPorCupo;
 
     public String getCiudadOrigen() {
         return ciudadOrigen;
@@ -38,5 +40,13 @@ public class CrearViajeRequestDTO {
 
     public void setCuposDisponibles(Integer cuposDisponibles) {
         this.cuposDisponibles = cuposDisponibles;
+    }
+
+    public BigDecimal getCostoPorCupo() {
+        return costoPorCupo;
+    }
+
+    public void setCostoPorCupo(BigDecimal costoPorCupo) {
+        this.costoPorCupo = costoPorCupo;
     }
 }
