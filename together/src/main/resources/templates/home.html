@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Home - Together</title>
+    <style>
+        body { background: #121212; color: white; padding: 2rem; font-family: 'Segoe UI', sans-serif; }
+        .topbar { display: flex; justify-content: flex-end; margin-bottom: 2rem; }
+        .logout-btn { background: transparent; color: white; border: 1px solid #3a3a3a; border-radius: 999px; padding: 0.7rem 1rem; cursor: pointer; }
+        .logout-btn:hover { border-color: #00d4ff; color: #00d4ff; }
+        .actions { display: flex; gap: 1rem; margin-top: 2rem; }
+        .link-btn { display: inline-block; padding: 0.85rem 1.1rem; border-radius: 999px; background: #00d4ff; color: #121212; text-decoration: none; font-weight: 700; }
+        .secondary-btn { display: inline-block; padding: 0.85rem 1.1rem; border-radius: 999px; border: 1px solid #3a3a3a; color: white; text-decoration: none; }
+    </style>
+</head>
+<body>
+<div class="topbar">
+    <button class="logout-btn" onclick="logout()">Cerrar sesión</button>
+</div>
+
+<h1>Bienvenido a Together</h1>
+<p id="userInfo">Cargando datos del usuario...</p>
+
+<div class="actions">
+    <a class="link-btn" href="/viajes">Ver viajes</a>
+    <a class="secondary-btn" href="/crear-viaje">Publicar viaje</a>
+    <a class="secondary-btn" href="/mis-solicitudes">Mis solicitudes</a>
+    <a class="secondary-btn" href="/solicitudes-recibidas">Solicitudes recibidas</a>
+</div>
+
+<script>
+    if (!localStorage.getItem('token')) {
+        window.location.href = "/login";
+    }
+
+    function logout() {
+        localStorage.removeItem('token');
+        window.location.href = "/login";
+    }
+
+    async function cargarDatosProtegidos() {
+        const token = localStorage.getItem('token');
+
+        if (!token) {
+            window.location.href = "/login";
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/info/me', {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (response.status === 403 || response.status === 401) {
+                logout();
+                return;
+            }
+
+            if (!response.ok) {
+                throw new Error('No se pudieron cargar los datos del usuario');
+            }
+
+            const usuario = await response.json();
+            document.getElementById('userInfo').innerText = `Hola, ${usuario.nombre}!`;
+        } catch (error) {
+            console.error("Error al cargar datos:", error);
+            document.getElementById('userInfo').innerText = "Sesión iniciada.";
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', cargarDatosProtegidos);
+</script>
+</body>
+</html>

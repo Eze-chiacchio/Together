@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Together - Login</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; background: #121212; color: white; }
+        .login-card { background: #1e1e1e; padding: 2.5rem; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); width: 350px; }
+        h2 { text-align: center; margin-bottom: 1.5rem; color: #00d4ff; }
+        input { width: 100%; padding: 0.8rem; margin: 0.6rem 0; border: 1px solid #333; border-radius: 6px; background: #2a2a2a; color: white; box-sizing: border-box; }
+        button { width: 100%; padding: 0.8rem; background: #00d4ff; color: #121212; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; margin-top: 1rem; }
+        button:hover { background: #00b8e6; }
+        #message { margin-top: 1rem; text-align: center; font-size: 0.9rem; }
+        .error { color: #ff4d4d; }
+        .success { color: #4dff88; }
+    </style>
+</head>
+<body>
+<div class="login-card">
+    <h2>Together</h2>
+    <form id="loginForm">
+        <input type="email" id="email" placeholder="Tu email" required>
+        <input type="password" id="password" placeholder="Contraseña" required>
+        <button type="submit">Iniciar Sesión</button>
+    </form>
+    <div id="message"></div>
+</div>
+
+<script>
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const messageDiv = document.getElementById('message');
+        messageDiv.innerText = "Autenticando...";
+
+        const credentials = {
+            email: document.getElementById('email').value,
+            password: document.getElementById('password').value
+        };
+
+        try {
+            const response = await fetch('/api/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(credentials)
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                // Guardamos el token (asumiendo que tu JSON devuelve { token: "..." })
+                localStorage.setItem('token', data.token);
+                messageDiv.className = "success";
+                messageDiv.innerText = "¡Login exitoso! Redirigiendo...";
+
+                // Simular redirección a una home protegida
+                setTimeout(() => { window.location.href = "/home"; }, 1500);
+            } else {
+                messageDiv.className = "error";
+                messageDiv.innerText = data.message || "Error: Credenciales inválidas";
+            }
+        } catch (error) {
+            messageDiv.className = "error";
+            messageDiv.innerText = "Error de conexión con el servidor";
+        }
+    });
+</script>
+</body>
+</html>

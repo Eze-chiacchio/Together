@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Together - Viajes Disponibles</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #121212; color: white; padding: 2rem; }
+        .container { max-width: 900px; margin: auto; }
+        .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+        h2 { color: #00d4ff; border-bottom: 2px solid #333; padding-bottom: 0.5rem; margin: 0; }
+        table { width: 100%; border-collapse: collapse; margin-top: 1rem; background: #1e1e1e; border-radius: 8px; overflow: hidden; }
+        th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #333; }
+        th { background-color: #2a2a2a; color: #00d4ff; text-transform: uppercase; font-size: 0.8rem; }
+        tr:hover { background-color: #252525; }
+        .badge { background: #00d4ff; color: #121212; padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 0.8rem; }
+        .driver { display: flex; align-items: center; gap: 0.75rem; }
+        .avatar { width: 42px; height: 42px; border-radius: 50%; object-fit: cover; background: #2f2f2f; border: 1px solid #333; }
+        .avatar-fallback { width: 42px; height: 42px; border-radius: 50%; background: #00d4ff; color: #121212; display: inline-flex; align-items: center; justify-content: center; font-weight: bold; }
+        .price { font-weight: 700; color: #8dffb3; }
+        .action-btn { display: inline-block; padding: 0.55rem 0.9rem; border-radius: 999px; background: #00d4ff; color: #121212; text-decoration: none; font-weight: 700; }
+        .action-btn:hover { background: #00b8e6; }
+        .logout-btn { background: transparent; color: white; border: 1px solid #3a3a3a; border-radius: 999px; padding: 0.7rem 1rem; cursor: pointer; }
+        .logout-btn:hover { border-color: #00d4ff; color: #00d4ff; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="topbar">
+        <h2>Viajes Disponibles</h2>
+        <button class="logout-btn" onclick="logout()">Cerrar sesión</button>
+    </div>
+    <table>
+        <thead>
+        <tr>
+            <th>Origen</th>
+            <th>Destino</th>
+            <th>Horario</th>
+            <th>Conductor</th>
+            <th>Cupos</th>
+            <th>Costo</th>
+            <th></th>
+        </tr>
+        </thead>
+        <tbody id="listaViajes">
+        </tbody>
+    </table>
+    <p id="errorMsg" style="color: #ff4d4d; display: none;">No se pudieron cargar los viajes.</p>
+</div>
+
+<script>
+    async function cargarViajes() {
+        const token = localStorage.getItem('token');
+        if (!token) { window.location.href = "/login"; return; }
+
+        try {
+            const response = await fetch('/api/viajes', {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (response.ok) {
+                const viajes = await response.json();
+                const tbody = document.getElementById('listaViajes');
+
+                tbody.innerHTML = viajes.map(v => `
+                    <tr>
+                        <td>${escapeHtml(v.ciudadOrigen)}</td>
+                        <td>${escapeHtml(v.ciudadDestino)}</td>
+                        <td>${new Date(v.horarioEstimado).toLocaleString()}</td>
+                        <td>${renderConductor(v)}</td>
+                        <td><span class="badge">${v.cuposDisponibles}</span></td>
+                        <td><span class="price">${formatCurrency(v.costoPorCupo)}</span></td>
+                        <td><a class="action-btn" href="/viajes/${v.id}">Ver viaje</a></td>
+                    </tr>
+                `).join('');
+            } else {
+                document.getElementById('errorMsg').style.display = 'block';
+            }
+        } catch (error) {
+            console.error("Error:", error);
+            document.getElementById('errorMsg').style.display = 'block';
+        }
+    }
+
+    function escapeHtml(value) {
+        return String(value ?? '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
+    function iniciales(nombre, apellido) {
+        return `${(nombre || '').trim().charAt(0)}${(apellido || '').trim().charAt(0)}`.toUpperCase() || '?';
+    }
+
+    function formatCurrency(value) {
+        return new Intl.NumberFormat('es-AR', {
+            style: 'currency',
+            currency: 'ARS',
+            maximumFractionDigits: 2
+        }).format(value ?? 0);
+    }
+
+    function renderConductor(viaje) {
+        const nombreCompleto = `${escapeHtml(viaje.conductorNombre)} ${escapeHtml(viaje.conductorApellido)}`;
+        const avatar = viaje.conductorProfileImageUrl
+            ? `<img class="avatar" src="${escapeHtml(viaje.conductorProfileImageUrl)}" alt="Foto de ${nombreCompleto}">`
+            : `<span class="avatar-fallback">${escapeHtml(iniciales(viaje.conductorNombre, viaje.conductorApellido))}</span>`;
+
+        return `
+            <div class="driver">
+                ${avatar}
+                <span>${nombreCompleto}</span>
+            </div>
+        `;
+    }
+
+    function logout() {
+        localStorage.removeItem('token');
+        window.location.href = "/login";
+    }
+
+    document.addEventListener('DOMContentLoaded', cargarViajes);
+</script>
+</body>
+</html>

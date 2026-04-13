@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Together - Publicar Viaje</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #121212; color: white; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .page { width: 100%; max-width: 960px; padding: 2rem; box-sizing: border-box; }
+        .topbar { display: flex; justify-content: flex-end; margin-bottom: 1.5rem; }
+        .card { background: #1e1e1e; padding: 2rem; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); width: 400px; margin: 0 auto; }
+        h2 { color: #00d4ff; text-align: center; margin-bottom: 1.5rem; }
+        label { display: block; margin-top: 1rem; color: #888; font-size: 0.9rem; }
+        input { width: 100%; padding: 0.8rem; margin-top: 0.4rem; border: 1px solid #333; border-radius: 6px; background: #2a2a2a; color: white; box-sizing: border-box; }
+        button { width: 100%; padding: 1rem; background: #00d4ff; color: #121212; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; margin-top: 1.5rem; }
+        button:hover { background: #00b8e6; }
+        #message { margin-top: 1rem; text-align: center; font-size: 0.9rem; }
+        .success { color: #4dff88; }
+        .error { color: #ff4d4d; }
+        .logout-btn { width: auto; margin-top: 0; background: transparent; color: white; border: 1px solid #3a3a3a; border-radius: 999px; padding: 0.7rem 1rem; }
+        .logout-btn:hover { border-color: #00d4ff; color: #00d4ff; background: transparent; }
+    </style>
+</head>
+<body>
+<div class="page">
+    <div class="topbar">
+        <button class="logout-btn" type="button" onclick="logout()">Cerrar sesión</button>
+    </div>
+
+    <div class="card">
+        <h2>Publicar nuevo viaje</h2>
+        <form id="viajeForm">
+            <label>Ciudad de Origen</label>
+            <input type="text" id="ciudadOrigen" placeholder="Ej: Moron" required>
+
+            <label>Ciudad de Destino</label>
+            <input type="text" id="ciudadDestino" placeholder="Ej: Parque Patricios" required>
+
+            <label>Horario Estimado</label>
+            <input type="datetime-local" id="horarioEstimado" required>
+
+            <div style="display: flex; gap: 1rem;">
+                <div style="flex: 1;">
+                    <label>Cupos</label>
+                    <input type="number" id="cuposDisponibles" min="1" max="10" value="3" required>
+                </div>
+                <div style="flex: 1;">
+                    <label>Costo ($)</label>
+                    <input type="number" id="costoPorCupo" min="0" step="0.01" placeholder="0.00" required>
+                </div>
+            </div>
+
+            <button type="submit">Publicar Viaje</button>
+        </form>
+        <div id="message"></div>
+        <a href="/home" style="display: block; text-align: center; margin-top: 1rem; color: #555; text-decoration: none; font-size: 0.8rem;">Volver al inicio</a>
+    </div>
+</div>
+
+<script>
+    function logout() {
+        localStorage.removeItem('token');
+        window.location.href = "/login";
+    }
+
+    document.getElementById('viajeForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const messageDiv = document.getElementById('message');
+        const token = localStorage.getItem('token');
+
+        if (!token) {
+            window.location.href = "/login";
+            return;
+        }
+
+        let horario = document.getElementById('horarioEstimado').value;
+        if (horario && horario.split(':').length === 2) {
+            horario += ":00";
+        }
+
+        const viajeData = {
+            ciudadOrigen: document.getElementById('ciudadOrigen').value,
+            ciudadDestino: document.getElementById('ciudadDestino').value,
+            horarioEstimado: horario,
+            cuposDisponibles: parseInt(document.getElementById('cuposDisponibles').value),
+            costoPorCupo: parseFloat(document.getElementById('costoPorCupo').value)
+        };
+
+        try {
+            const response = await fetch('/api/viajes', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(viajeData)
+            });
+
+            if (response.ok) {
+                messageDiv.className = "success";
+                messageDiv.innerText = "Viaje publicado con éxito.";
+                setTimeout(() => { window.location.href = "/viajes"; }, 1500);
+            } else {
+                const errorDetail = await response.text();
+                console.error("Error del servidor:", errorDetail);
+                messageDiv.className = "error";
+                messageDiv.innerText = "Error: " + errorDetail;
+            }
+        } catch (error) {
+            console.error("Error de red:", error);
+            messageDiv.className = "error";
+            messageDiv.innerText = "Error de conexión.";
+        }
+    });
+</script>
+</body>
+</html>

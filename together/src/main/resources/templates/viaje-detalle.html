@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Together - Detalle del Viaje</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #121212; color: white; margin: 0; padding: 2rem; }
+        .page { max-width: 880px; margin: 0 auto; }
+        .topbar { display: flex; justify-content: flex-end; margin-bottom: 1rem; }
+        .back-link { color: #8c8c8c; text-decoration: none; display: inline-block; margin-bottom: 1.5rem; }
+        .card { background: linear-gradient(160deg, #1f1f1f, #161616); border: 1px solid #2f2f2f; border-radius: 20px; padding: 2rem; box-shadow: 0 20px 50px rgba(0,0,0,0.35); }
+        .hero { display: flex; justify-content: space-between; gap: 1.5rem; align-items: flex-start; margin-bottom: 2rem; }
+        .route { font-size: 2rem; font-weight: 800; color: #f3f3f3; margin: 0; }
+        .subtitle { color: #9ddfff; font-size: 0.95rem; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 0.5rem; }
+        .price { font-size: 1.8rem; font-weight: 800; color: #7dffb2; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+        .info-box { background: #191919; border: 1px solid #2c2c2c; border-radius: 16px; padding: 1rem; }
+        .label { display: block; color: #8a8a8a; font-size: 0.85rem; margin-bottom: 0.35rem; text-transform: uppercase; letter-spacing: 0.06em; }
+        .value { font-size: 1.1rem; font-weight: 700; }
+        .driver-card { display: flex; align-items: center; gap: 1rem; padding: 1rem; background: #171717; border: 1px solid #2c2c2c; border-radius: 18px; margin-bottom: 1.5rem; }
+        .avatar { width: 72px; height: 72px; border-radius: 50%; object-fit: cover; background: #2f2f2f; border: 2px solid #303030; }
+        .avatar-fallback { width: 72px; height: 72px; border-radius: 50%; background: #00d4ff; color: #121212; display: inline-flex; align-items: center; justify-content: center; font-size: 1.4rem; font-weight: 800; }
+        .driver-name { font-size: 1.2rem; font-weight: 800; }
+        .driver-meta { color: #a0a0a0; margin-top: 0.3rem; }
+        .actions { display: flex; gap: 1rem; flex-wrap: wrap; }
+        button { border: none; border-radius: 999px; padding: 0.95rem 1.4rem; font-weight: 800; cursor: pointer; }
+        .reserve-btn { background: #00d4ff; color: #121212; }
+        .reserve-btn:hover { background: #00b8e6; }
+        .reserve-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+        .secondary-btn { background: transparent; color: #e0e0e0; border: 1px solid #3a3a3a; }
+        .message { margin-top: 1rem; font-weight: 700; }
+        .message.success { color: #7dffb2; }
+        .message.error { color: #ff7b7b; }
+        #errorMsg { display: none; margin-top: 1rem; color: #ff7b7b; font-weight: 700; }
+        .logout-btn { background: transparent; color: white; border: 1px solid #3a3a3a; border-radius: 999px; padding: 0.7rem 1rem; cursor: pointer; }
+        .logout-btn:hover { border-color: #00d4ff; color: #00d4ff; }
+    </style>
+</head>
+<body>
+<div class="page">
+    <div class="topbar">
+        <button class="logout-btn" onclick="logout()">Cerrar sesión</button>
+    </div>
+
+    <a class="back-link" href="/viajes">← Volver al listado</a>
+
+    <div class="card">
+        <div class="hero">
+            <div>
+                <div class="subtitle">Detalle del viaje</div>
+                <h1 class="route" id="routeTitle">Cargando viaje...</h1>
+            </div>
+            <div class="price" id="priceTag"></div>
+        </div>
+
+        <div class="grid">
+            <div class="info-box">
+                <span class="label">Salida</span>
+                <span class="value" id="origenValue">-</span>
+            </div>
+            <div class="info-box">
+                <span class="label">Destino</span>
+                <span class="value" id="destinoValue">-</span>
+            </div>
+            <div class="info-box">
+                <span class="label">Horario</span>
+                <span class="value" id="horarioValue">-</span>
+            </div>
+            <div class="info-box">
+                <span class="label">Cupos disponibles</span>
+                <span class="value" id="cuposValue">-</span>
+            </div>
+        </div>
+
+        <div class="driver-card">
+            <div id="driverAvatar"></div>
+            <div>
+                <div class="driver-name" id="conductorValue">-</div>
+                <div class="driver-meta">Conductor del viaje</div>
+            </div>
+        </div>
+
+        <div class="actions">
+            <button class="reserve-btn" id="reserveButton">Reservar viaje</button>
+            <button class="secondary-btn" onclick="window.location.href='/viajes'">Seguir viendo viajes</button>
+        </div>
+
+        <div id="reserveMessage" class="message"></div>
+        <div id="errorMsg">No se pudo cargar el detalle del viaje.</div>
+    </div>
+</div>
+
+<script>
+    const viajeId = window.location.pathname.split('/').filter(Boolean).pop();
+    let currentUser = null;
+
+    function escapeHtml(value) {
+        return String(value ?? '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
+    function initials(nombre, apellido) {
+        return `${(nombre || '').trim().charAt(0)}${(apellido || '').trim().charAt(0)}`.toUpperCase() || '?';
+    }
+
+    function formatCurrency(value) {
+        return new Intl.NumberFormat('es-AR', {
+            style: 'currency',
+            currency: 'ARS',
+            maximumFractionDigits: 2
+        }).format(value ?? 0);
+    }
+
+    function renderDriverAvatar(viaje) {
+        const nombreCompleto = `${escapeHtml(viaje.conductorNombre)} ${escapeHtml(viaje.conductorApellido)}`;
+        if (viaje.conductorProfileImageUrl) {
+            return `<img class="avatar" src="${escapeHtml(viaje.conductorProfileImageUrl)}" alt="Foto de ${nombreCompleto}">`;
+        }
+
+        return `<span class="avatar-fallback">${escapeHtml(initials(viaje.conductorNombre, viaje.conductorApellido))}</span>`;
+    }
+
+    async function cargarUsuarioActual(token) {
+        const response = await fetch('/api/info/me', {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error('No se pudo obtener el usuario actual');
+        }
+
+        currentUser = await response.json();
+    }
+
+    function actualizarEstadoBoton(viaje) {
+        const reserveButton = document.getElementById('reserveButton');
+
+        if (viaje.cuposDisponibles <= 0) {
+            reserveButton.disabled = true;
+            reserveButton.innerText = 'Sin cupos disponibles';
+            return;
+        }
+
+        if (currentUser && currentUser.email === viaje.conductorEmail) {
+            reserveButton.disabled = true;
+            reserveButton.innerText = 'Es tu viaje';
+        }
+    }
+
+    async function cargarDetalleViaje() {
+        const token = localStorage.getItem('token');
+        if (!token) {
+            window.location.href = '/login';
+            return;
+        }
+
+        try {
+            await cargarUsuarioActual(token);
+
+            const response = await fetch(`/api/viajes/${viajeId}`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('No se pudo obtener el viaje');
+            }
+
+            const viaje = await response.json();
+            document.getElementById('routeTitle').innerText = `${viaje.ciudadOrigen} → ${viaje.ciudadDestino}`;
+            document.getElementById('priceTag').innerText = formatCurrency(viaje.costoPorCupo);
+            document.getElementById('origenValue').innerText = viaje.ciudadOrigen;
+            document.getElementById('destinoValue').innerText = viaje.ciudadDestino;
+            document.getElementById('horarioValue').innerText = new Date(viaje.horarioEstimado).toLocaleString();
+            document.getElementById('cuposValue').innerText = viaje.cuposDisponibles;
+            document.getElementById('conductorValue').innerText = `${viaje.conductorNombre} ${viaje.conductorApellido}`;
+            document.getElementById('driverAvatar').innerHTML = renderDriverAvatar(viaje);
+            actualizarEstadoBoton(viaje);
+        } catch (error) {
+            console.error(error);
+            document.getElementById('errorMsg').style.display = 'block';
+        }
+    }
+
+    async function reservarViaje() {
+        const token = localStorage.getItem('token');
+        const message = document.getElementById('reserveMessage');
+        const button = document.getElementById('reserveButton');
+
+        if (!token) {
+            window.location.href = '/login';
+            return;
+        }
+
+        button.disabled = true;
+        message.className = 'message';
+        message.innerText = 'Enviando solicitud...';
+
+        try {
+            const response = await fetch(`/api/reservas/viaje/${viajeId}`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (response.ok) {
+                message.className = 'message success';
+                message.innerText = 'Solicitud enviada con éxito.';
+                button.innerText = 'Solicitud enviada';
+                return;
+            }
+
+            let errorText = 'No se pudo reservar el viaje.';
+            try {
+                const contentType = response.headers.get('content-type') || '';
+                if (contentType.includes('application/json')) {
+                    const errorBody = await response.json();
+                    errorText = errorBody.message || errorBody.error || errorText;
+                } else {
+                    errorText = await response.text();
+                }
+            } catch (ignored) {}
+
+            message.className = 'message error';
+            message.innerText = errorText;
+            button.disabled = false;
+        } catch (error) {
+            console.error(error);
+            message.className = 'message error';
+            message.innerText = 'Error de conexión al reservar el viaje.';
+            button.disabled = false;
+        }
+    }
+
+    function logout() {
+        localStorage.removeItem('token');
+        window.location.href = '/login';
+    }
+
+    document.getElementById('reserveButton').addEventListener('click', reservarViaje);
+    document.addEventListener('DOMContentLoaded', cargarDetalleViaje);
+</script>
+</body>
+</html>

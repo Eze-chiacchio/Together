@@ -15,6 +15,7 @@ public class ViajeResponseDTO {
     private Long conductorId;
     private String conductorNombre;
     private String conductorApellido;
+    private String conductorEmail;
     private String conductorProfileImageUrl;
 
     public ViajeResponseDTO(Viaje viaje) {
@@ -31,6 +32,7 @@ public class ViajeResponseDTO {
         this.conductorId = viaje.getConductor().getId();
         this.conductorNombre = viaje.getConductor().getNombre();
         this.conductorApellido = viaje.getConductor().getApellido();
+        this.conductorEmail = viaje.getConductor().getEmail();
         this.conductorProfileImageUrl = conductorProfileImageUrl;
     }
 
@@ -68,6 +70,10 @@ public class ViajeResponseDTO {
 
     public String getConductorApellido() {
         return conductorApellido;
+    }
+
+    public String getConductorEmail() {
+        return conductorEmail;
     }
 
     public String getConductorProfileImageUrl() {

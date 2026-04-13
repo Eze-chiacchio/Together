@@ -6,9 +6,12 @@ import com.chiacchio.together.Repository.ViajeRepository;
 import com.chiacchio.together.dto.CrearViajeRequestDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
 import java.util.List;
+
+import static org.springframework.http.HttpStatus.NOT_FOUND;
 
 @Service
 public class ViajeService {
@@ -32,6 +35,11 @@ public class ViajeService {
 
     public List<Viaje> listarViajesDisponibles() {
         return viajeRepository.findByCuposDisponiblesGreaterThanOrderByHorarioEstimadoAsc(0);
+    }
+
+    public Viaje obtenerViajePorId(Long viajeId) {
+        return viajeRepository.findById(viajeId)
+                .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "Viaje no encontrado"));
     }
 
     private void validarRequest(CrearViajeRequestDTO request) {

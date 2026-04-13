@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Together - Mis Solicitudes</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #121212; color: white; margin: 0; padding: 2rem; }
+        .page { max-width: 1100px; margin: 0 auto; }
+        .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+        .title { margin: 0; color: #00d4ff; }
+        .logout-btn { background: transparent; color: white; border: 1px solid #3a3a3a; border-radius: 999px; padding: 0.7rem 1rem; cursor: pointer; }
+        .logout-btn:hover { border-color: #00d4ff; color: #00d4ff; }
+        .back-link { color: #8c8c8c; text-decoration: none; display: inline-block; margin-bottom: 1.5rem; }
+        .list { display: grid; gap: 1rem; }
+        .card { background: linear-gradient(160deg, #1f1f1f, #161616); border: 1px solid #2f2f2f; border-radius: 18px; padding: 1.25rem; box-shadow: 0 16px 40px rgba(0,0,0,0.25); }
+        .card-header { display: flex; justify-content: space-between; gap: 1rem; align-items: flex-start; margin-bottom: 1rem; }
+        .route { font-size: 1.5rem; font-weight: 800; margin: 0; }
+        .subtitle { color: #9ddfff; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.4rem; }
+        .status { padding: 0.45rem 0.75rem; border-radius: 999px; font-weight: 800; font-size: 0.8rem; text-transform: uppercase; }
+        .status-pendiente { background: #ffe082; color: #322400; }
+        .status-aceptada { background: #7dffb2; color: #123022; }
+        .driver { display: flex; gap: 1rem; align-items: center; padding: 1rem; background: #181818; border: 1px solid #2a2a2a; border-radius: 16px; margin-bottom: 1rem; }
+        .avatar { width: 64px; height: 64px; border-radius: 50%; object-fit: cover; background: #2f2f2f; border: 2px solid #303030; }
+        .avatar-fallback { width: 64px; height: 64px; border-radius: 50%; background: #00d4ff; color: #121212; display: inline-flex; align-items: center; justify-content: center; font-size: 1.2rem; font-weight: 800; }
+        .name { font-size: 1.1rem; font-weight: 800; }
+        .meta { color: #b8b8b8; margin-top: 0.25rem; }
+        .trip-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0.8rem; }
+        .trip-box { background: #181818; border: 1px solid #2a2a2a; border-radius: 14px; padding: 0.9rem; }
+        .trip-label { display: block; color: #8a8a8a; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.35rem; }
+        .trip-value { font-weight: 700; }
+        .btn-secondary { margin-top: 1rem; display: inline-flex; align-items: center; padding: 0.85rem 1.1rem; border-radius: 999px; border: 1px solid #3a3a3a; color: white; text-decoration: none; }
+        .empty, .error { background: #1d1d1d; border: 1px solid #2e2e2e; border-radius: 18px; padding: 1.25rem; color: #d0d0d0; }
+    </style>
+</head>
+<body>
+<div class="page">
+    <div class="topbar">
+        <h1 class="title">Mis solicitudes</h1>
+        <button class="logout-btn" onclick="logout()">Cerrar sesión</button>
+    </div>
+
+    <a class="back-link" href="/home">← Volver al inicio</a>
+
+    <div id="errorBox" class="error" style="display: none;">No se pudieron cargar tus solicitudes.</div>
+    <div id="emptyBox" class="empty" style="display: none;">Todavía no hiciste solicitudes de viaje.</div>
+    <div id="reservasList" class="list"></div>
+</div>
+
+<script>
+    function escapeHtml(value) {
+        return String(value ?? '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
+    function initials(nombre, apellido) {
+        return `${(nombre || '').trim().charAt(0)}${(apellido || '').trim().charAt(0)}`.toUpperCase() || '?';
+    }
+
+    function formatEstado(estado) {
+        return estado.charAt(0) + estado.slice(1).toLowerCase();
+    }
+
+    function statusClass(estado) {
+        return `status status-${estado.toLowerCase()}`;
+    }
+
+    function renderAvatar(url, nombre, apellido) {
+        if (url) {
+            return `<img class="avatar" src="${escapeHtml(url)}" alt="Foto de ${escapeHtml(nombre)} ${escapeHtml(apellido)}">`;
+        }
+
+        return `<span class="avatar-fallback">${escapeHtml(initials(nombre, apellido))}</span>`;
+    }
+
+    function renderReserva(reserva) {
+        return `
+            <article class="card">
+                <div class="card-header">
+                    <div>
+                        <div class="subtitle">Tu solicitud</div>
+                        <h2 class="route">${escapeHtml(reserva.ciudadOrigen)} → ${escapeHtml(reserva.ciudadDestino)}</h2>
+                    </div>
+                    <span class="${statusClass(reserva.estado)}">${escapeHtml(formatEstado(reserva.estado))}</span>
+                </div>
+
+                <div class="driver">
+                    ${renderAvatar(reserva.conductorProfileImageUrl, reserva.conductorNombre, reserva.conductorApellido)}
+                    <div>
+                        <div class="name">${escapeHtml(reserva.conductorNombre)} ${escapeHtml(reserva.conductorApellido)}</div>
+                        <div class="meta">Conductor del viaje</div>
+                    </div>
+                </div>
+
+                <div class="trip-grid">
+                    <div class="trip-box">
+                        <span class="trip-label">Horario del viaje</span>
+                        <span class="trip-value">${new Date(reserva.horarioEstimado).toLocaleString()}</span>
+                    </div>
+                    <div class="trip-box">
+                        <span class="trip-label">Cupos disponibles</span>
+                        <span class="trip-value">${escapeHtml(reserva.cuposDisponibles)}</span>
+                    </div>
+                    <div class="trip-box">
+                        <span class="trip-label">Solicitud enviada</span>
+                        <span class="trip-value">${new Date(reserva.fechaSolicitud).toLocaleString()}</span>
+                    </div>
+                    <div class="trip-box">
+                        <span class="trip-label">Estado actual</span>
+                        <span class="trip-value">${escapeHtml(formatEstado(reserva.estado))}</span>
+                    </div>
+                </div>
+
+                <a class="btn-secondary" href="/viajes/${reserva.viajeId}">Abrir viaje</a>
+            </article>
+        `;
+    }
+
+    async function cargarMisSolicitudes() {
+        const token = localStorage.getItem('token');
+        if (!token) {
+            window.location.href = '/login';
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/reservas/mis-solicitudes', {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (response.status === 401 || response.status === 403) {
+                logout();
+                return;
+            }
+
+            if (!response.ok) {
+                throw new Error('No se pudieron cargar las solicitudes');
+            }
+
+            const reservas = await response.json();
+            const visibles = reservas.filter(reserva => reserva.estado !== 'RECHAZADA');
+            const list = document.getElementById('reservasList');
+
+            if (!visibles.length) {
+                document.getElementById('emptyBox').style.display = 'block';
+                return;
+            }
+
+            list.innerHTML = visibles.map(renderReserva).join('');
+        } catch (error) {
+            console.error(error);
+            document.getElementById('errorBox').style.display = 'block';
+        }
+    }
+
+    function logout() {
+        localStorage.removeItem('token');
+        window.location.href = '/login';
+    }
+
+    document.addEventListener('DOMContentLoaded', cargarMisSolicitudes);
+</script>
+</body>
+</html>
