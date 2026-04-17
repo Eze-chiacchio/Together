@@ -15,6 +15,16 @@ public class ViewController {
         return "register";
     }
 
+    @GetMapping("/forgot-password")
+    public String forgotPassword() {
+        return "forgot-password";
+    }
+
+    @GetMapping("/reset-password")
+    public String resetPassword() {
+        return "reset-password";
+    }
+
     @GetMapping("/home")
     public String home() {
         return "home";

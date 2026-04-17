@@ -34,7 +34,7 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
                         .dispatcherTypeMatchers(DispatcherType.ERROR, DispatcherType.FORWARD).permitAll()
-                        .requestMatchers("/crear-viaje", "/login", "/register", "/home", "/viajes", "/viajes/**", "/solicitudes-recibidas", "/mis-solicitudes").permitAll()
+                        .requestMatchers("/crear-viaje", "/login", "/register", "/forgot-password", "/reset-password", "/home", "/viajes", "/viajes/**", "/solicitudes-recibidas", "/mis-solicitudes").permitAll()
                         .requestMatchers("/api/auth/**").permitAll()
                         .anyRequest().authenticated()
                 );

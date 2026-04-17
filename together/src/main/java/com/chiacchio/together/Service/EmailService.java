@@ -20,6 +20,9 @@ public class EmailService {
     @Value("${app.confirmation.url:http://localhost:8080/api/auth/confirm?token=}")
     private String confirmationBaseUrl;
 
+    @Value("${app.reset-password.url:http://localhost:8080/reset-password?token=}")
+    private String resetPasswordBaseUrl;
+
     @Value("${resend.mail.api.key}")
     private String resendApiKey;
 
@@ -70,6 +73,55 @@ public class EmailService {
                 Thread.currentThread().interrupt();
             }
             throw new IllegalStateException("No se pudo enviar el mail de confirmacion", e);
+        }
+    }
+
+    public void sendPasswordResetEmail(String to, String token) {
+        String resetUrl = resetPasswordBaseUrl + token;
+        String text = "Recibimos una solicitud para cambiar tu contraseña.\n" +
+                "Podés hacerlo desde este enlace:\n" + resetUrl;
+        String html = "<p>Recibimos una solicitud para cambiar tu contraseña.</p>"
+                + "<p>Podés hacerlo desde este enlace:</p>"
+                + "<p><a href=\"" + escapeHtml(resetUrl) + "\">Restablecer contraseña</a></p>";
+
+        String payload = """
+                {
+                  "from": "%s",
+                  "to": ["%s"],
+                  "subject": "Together - Recuperacion de contraseña",
+                  "text": "%s",
+                  "html": "%s"
+                }
+                """.formatted(
+                escapeJson(fromAddress),
+                escapeJson(to),
+                escapeJson(text),
+                escapeJson(html)
+        );
+
+        sendResendRequest(to, payload, "mail de recuperación");
+    }
+
+    private void sendResendRequest(String to, String payload, String logLabel) {
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(resendEndpoint))
+                .header("Authorization", "Bearer " + resendApiKey)
+                .header("Content-Type", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofString(payload))
+                .build();
+
+        try {
+            log.info("Enviando {} por Resend a {}", logLabel, to);
+            HttpResponse<String> response = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofString());
+
+            if (response.statusCode() < 200 || response.statusCode() >= 300) {
+                throw new IllegalStateException("Resend devolvio " + response.statusCode() + ": " + response.body());
+            }
+        } catch (IOException | InterruptedException e) {
+            if (e instanceof InterruptedException) {
+                Thread.currentThread().interrupt();
+            }
+            throw new IllegalStateException("No se pudo enviar el mail", e);
         }
     }
 

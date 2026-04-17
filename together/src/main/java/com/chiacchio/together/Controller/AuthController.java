@@ -3,8 +3,11 @@ package com.chiacchio.together.Controller;
 import com.chiacchio.together.Model.JwtResponse;
 import com.chiacchio.together.Model.Usuario;
 import com.chiacchio.together.Security.JwtUtils;
+import com.chiacchio.together.Service.PasswordResetService;
 import com.chiacchio.together.Service.RegistrationService;
 import com.chiacchio.together.Service.UserService;
+import com.chiacchio.together.dto.ForgotPasswordRequestDTO;
+import com.chiacchio.together.dto.ResetPasswordRequestDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -24,6 +27,9 @@ public class AuthController {
 
     @Autowired
     private RegistrationService registrationService;
+
+    @Autowired
+    private PasswordResetService passwordResetService;
 
     @Autowired
     private JwtUtils jwtUtils;
@@ -50,6 +56,26 @@ public class AuthController {
         try {
             registrationService.confirmRegistration(token);
             return ResponseEntity.ok("Cuenta confirmada correctamente. Ya puedes iniciar sesion.");
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
+    }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<?> forgotPassword(@RequestBody ForgotPasswordRequestDTO request) {
+        try {
+            passwordResetService.requestPasswordReset(request.getEmail());
+            return ResponseEntity.ok("Si existe una cuenta asociada a ese email, te enviamos un enlace para recuperar tu contraseña.");
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(e.getMessage());
+        }
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<?> resetPassword(@RequestBody ResetPasswordRequestDTO request) {
+        try {
+            passwordResetService.resetPassword(request.getToken(), request.getNewPassword());
+            return ResponseEntity.ok("Contraseña actualizada correctamente. Ya puedes iniciar sesion.");
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }
