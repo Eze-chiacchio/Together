@@ -30,7 +30,7 @@ public class UserService {
 
         String encodedPassword = passwordEncoder.encode(user.getPassword());
         user.setPassword(encodedPassword);
-        user.setEnabled(true);
+        user.setEnabled(false);
 
         try {
             return usuarioRepository.save(user);

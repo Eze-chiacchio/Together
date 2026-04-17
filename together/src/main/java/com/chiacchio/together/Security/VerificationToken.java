@@ -51,4 +51,12 @@ public class VerificationToken {
     public void setUser(Usuario user) {
         this.user = user;
     }
+
+    public LocalDateTime getExpiryDate() {
+        return expiryDate;
+    }
+
+    public void setExpiryDate(LocalDateTime expiryDate) {
+        this.expiryDate = expiryDate;
+    }
 }

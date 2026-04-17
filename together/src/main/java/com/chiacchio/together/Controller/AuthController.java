@@ -3,6 +3,7 @@ package com.chiacchio.together.Controller;
 import com.chiacchio.together.Model.JwtResponse;
 import com.chiacchio.together.Model.Usuario;
 import com.chiacchio.together.Security.JwtUtils;
+import com.chiacchio.together.Service.RegistrationService;
 import com.chiacchio.together.Service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -22,6 +23,9 @@ public class AuthController {
     private UserService userService;
 
     @Autowired
+    private RegistrationService registrationService;
+
+    @Autowired
     private JwtUtils jwtUtils;
 
     @Autowired
@@ -30,10 +34,12 @@ public class AuthController {
     @PostMapping("/register")
     public ResponseEntity<?> registerUser(@RequestBody Usuario user) {
         try {
-            userService.registrarUsuario(user);
+            String message = registrationService.registerUserWithConfirmation(user);
 
             return ResponseEntity.status(HttpStatus.CREATED)
-                    .body("Usuario registrado correctamente.");
+                    .body(message);
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(e.getMessage());
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
         }
@@ -41,8 +47,12 @@ public class AuthController {
 
     @GetMapping("/confirm")
     public ResponseEntity<?> confirmRegistration(@RequestParam("token") String token) {
-        return ResponseEntity.status(HttpStatus.GONE)
-                .body("La confirmacion de cuenta esta deshabilitada temporalmente.");
+        try {
+            registrationService.confirmRegistration(token);
+            return ResponseEntity.ok("Cuenta confirmada correctamente. Ya puedes iniciar sesion.");
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
     }
 
     @PostMapping("/login")
